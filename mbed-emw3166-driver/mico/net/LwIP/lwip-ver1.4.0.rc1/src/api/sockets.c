@@ -152,19 +152,19 @@ static volatile int select_cb_ctr;
   * by using -err as an index */
 static const int err_to_errno_table[] = {
   0,             /* ERR_OK          0      No error, everything OK. */
-  ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
-  ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
-  EWOULDBLOCK,   /* ERR_TIMEOUT    -3      Timeout                  */
-  EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
-  EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
-  EINVAL,        /* ERR_VAL        -6      Illegal value.           */
-  EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
-  ECONNABORTED,  /* ERR_ABRT       -8      Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -9      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD       -10     Connection closed.       */
-  ENOTCONN,      /* ERR_CONN       -11     Not connected.           */
-  EIO,           /* ERR_ARG        -12     Illegal argument.        */
-  EADDRINUSE,    /* ERR_USE        -13     Address in use.          */
+  LWIP_ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
+  LWIP_ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
+  LWIP_EWOULDBLOCK,   /* ERR_TIMEOUT    -3      Timeout                  */
+  LWIP_EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
+  LWIP_EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
+  LWIP_EINVAL,        /* ERR_VAL        -6      Illegal value.           */
+  LWIP_EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
+  LWIP_ECONNABORTED,  /* ERR_ABRT       -8      Connection aborted.      */
+  LWIP_ECONNRESET,    /* ERR_RST        -9      Connection reset.        */
+  LWIP_ESHUTDOWN,     /* ERR_CLSD       -10     Connection closed.       */
+  LWIP_ENOTCONN,      /* ERR_CONN       -11     Not connected.           */
+  LWIP_EIO,           /* ERR_ARG        -12     Illegal argument.        */
+  LWIP_EADDRINUSE,    /* ERR_USE        -13     Address in use.          */
   -1,            /* ERR_IF         -14     Low-level netif error    */
   -1,            /* ERR_ISCONN     -15     Already connected.       */
 };
@@ -174,7 +174,7 @@ static const int err_to_errno_table[] = {
 
 #define err_to_errno(err) \
   ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
-    err_to_errno_table[-(err)] : EIO)
+    err_to_errno_table[-(err)] : LWIP_EIO)
 
 #ifdef ERRNO
 #ifndef set_errno
@@ -219,7 +219,7 @@ get_socket(int s)
 
   if ((s < 0) || (s >= NUM_SOCKETS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s));
-    set_errno(EBADF);
+    set_errno(LWIP_EBADF);
     return NULL;
   }
 
@@ -227,7 +227,7 @@ get_socket(int s)
 
   if (!sock->conn) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): not active\n", s));
-    set_errno(EBADF);
+    set_errno(LWIP_EBADF);
     return NULL;
   }
 
@@ -348,8 +348,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   }
 
   if (netconn_is_nonblocking(sock->conn) && (sock->rcvevent <= 0)) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
-    sock_set_errno(sock, EWOULDBLOCK);
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning LWIP_EWOULDBLOCK\n", s));
+    sock_set_errno(sock, LWIP_EWOULDBLOCK);
     return -1;
   }
 
@@ -393,7 +393,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newsock = alloc_socket(newconn, 1);
   if (newsock == -1) {
     netconn_delete(newconn);
-    sock_set_errno(sock, ENFILE);
+    sock_set_errno(sock, LWIP_ENFILE);
     return -1;
   }
   LWIP_ASSERT("invalid socket index", (newsock >= 0) && (newsock < NUM_SOCKETS));
@@ -602,8 +602,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
           sock_set_errno(sock, 0);
           return off;
         }
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): returning EWOULDBLOCK\n", s));
-        sock_set_errno(sock, EWOULDBLOCK);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): returning LWIP_EWOULDBLOCK\n", s));
+        sock_set_errno(sock, LWIP_EWOULDBLOCK);
         return -1;
       }
 
@@ -984,13 +984,13 @@ lwip_socket(int domain, int type, int protocol)
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%d, %d/UNKNOWN, %d) = -1\n",
                                  domain, type, protocol));
-    set_errno(EINVAL);
+    set_errno(LWIP_EINVAL);
     return -1;
   }
 
   if (!conn) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("-1 / ENOBUFS (could not create netconn)\n"));
-    set_errno(ENOBUFS);
+    set_errno(LWIP_ENOBUFS);
     return -1;
   }
 
@@ -998,7 +998,7 @@ lwip_socket(int domain, int type, int protocol)
 
   if (i == -1) {
     netconn_delete(conn);
-    set_errno(ENFILE);
+    set_errno(LWIP_ENFILE);
     return -1;
   }
   conn->socket = i;
@@ -1161,7 +1161,7 @@ lwip_select2(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       err = sys_sem_new(&sem, 0);
       if (err != ERR_OK) {
         /* failed to create semaphore */
-        set_errno(ENOMEM);
+        set_errno(LWIP_ENOMEM);
         return -1;
       }
       select_cb.psem = &sem;
@@ -1433,12 +1433,12 @@ lwip_shutdown(int s, int how)
 
   if (sock->conn != NULL) {
     if (netconn_type(sock->conn) != NETCONN_TCP) {
-      sock_set_errno(sock, EOPNOTSUPP);
-      return EOPNOTSUPP;
+      sock_set_errno(sock, LWIP_EOPNOTSUPP);
+      return LWIP_EOPNOTSUPP;
     }
   } else {
-    sock_set_errno(sock, ENOTCONN);
-    return ENOTCONN;
+    sock_set_errno(sock, LWIP_ENOTCONN);
+    return LWIP_ENOTCONN;
   }
 
   if (how == SHUT_RD) {
@@ -1449,8 +1449,8 @@ lwip_shutdown(int s, int how)
     shut_rx = 1;
     shut_tx = 1;
   } else {
-    sock_set_errno(sock, EINVAL);
-    return EINVAL;
+    sock_set_errno(sock, LWIP_EINVAL);
+    return LWIP_EINVAL;
   }
   err = netconn_shutdown(sock->conn, shut_rx, shut_tx);
 
@@ -1517,7 +1517,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   }
 
   if ((NULL == optval) || (NULL == optlen)) {
-    sock_set_errno(sock, EFAULT);
+    sock_set_errno(sock, LWIP_EFAULT);
     return -1;
   }
 
@@ -1556,19 +1556,19 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     case SO_TYPE:
     /* UNIMPL case SO_USELOOPBACK: */
       if (*optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
 
     case SO_NO_CHECK:
       if (*optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
 #if LWIP_UDP
       if ((sock->conn->type != NETCONN_UDP) ||
           ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
 #endif /* LWIP_UDP */
       break;
@@ -1576,7 +1576,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
                      
@@ -1589,26 +1589,26 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     case IP_TTL:
     case IP_TOS:
       if (*optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
 #if LWIP_IGMP
     case IP_MULTICAST_TTL:
       if (*optlen < sizeof(u8_t)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
     case IP_MULTICAST_IF:
       if (*optlen < sizeof(struct in_addr)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
     case IP_MULTICAST_LOOP:
       if (*optlen < sizeof(u8_t)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
       break;
 #endif /* LWIP_IGMP */
@@ -1616,7 +1616,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
          
@@ -1624,7 +1624,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     if (*optlen < sizeof(int)) {
-      err = EINVAL;
+      err = LWIP_EINVAL;
       break;
     }
     
@@ -1647,7 +1647,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
@@ -1655,7 +1655,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:
     if (*optlen < sizeof(int)) {
-      err = EINVAL;
+      err = LWIP_EINVAL;
       break;
     }
     
@@ -1672,7 +1672,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_UDPLITE, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_UDP && LWIP_UDPLITE*/
@@ -1680,7 +1680,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n",
                                   s, level, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
   }  /* switch */
 
    
@@ -1780,7 +1780,7 @@ lwip_getsockopt_internal(void *arg)
 
     case SO_ERROR:
       /* only overwrite if ERR_OK before */
-      if ((sock->err == 0) || (sock->err == EINPROGRESS)) {
+      if ((sock->err == 0) || (sock->err == LWIP_EINPROGRESS)) {
         sock_set_errno(sock, err_to_errno(sock->conn->last_err));
       } 
       *(int *)optval = sock->err;
@@ -1950,7 +1950,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   }
 
   if (NULL == optval) {
-    sock_set_errno(sock, EFAULT);
+    sock_set_errno(sock, LWIP_EFAULT);
     return -1;
   }
 
@@ -1986,25 +1986,25 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 #endif /* SO_REUSE */
     /* UNIMPL case SO_USELOOPBACK: */
       if (optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
     case SO_NO_CHECK:
       if (optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
 #if LWIP_UDP
       if ((sock->conn->type != NETCONN_UDP) ||
           ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
 #endif /* LWIP_UDP */
       break;
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 
@@ -2017,48 +2017,48 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     case IP_TTL:
     case IP_TOS:
       if (optlen < sizeof(int)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       break;
 #if LWIP_IGMP
     case IP_MULTICAST_TTL:
       if (optlen < sizeof(u8_t)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
       break;
     case IP_MULTICAST_IF:
       if (optlen < sizeof(struct in_addr)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
       break;
     case IP_MULTICAST_LOOP:
       if (optlen < sizeof(u8_t)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
       break;
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:
       if (optlen < sizeof(struct ip_mreq)) {
-        err = EINVAL;
+        err = LWIP_EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
-        err = EAFNOSUPPORT;
+        err = LWIP_EAFNOSUPPORT;
       }
       break;
 #endif /* LWIP_IGMP */
       default:
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n",
                     s, optname));
-        err = ENOPROTOOPT;
+        err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 
@@ -2066,7 +2066,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     if (optlen < sizeof(int)) {
-      err = EINVAL;
+      err = LWIP_EINVAL;
       break;
     }
 
@@ -2088,7 +2088,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
@@ -2096,7 +2096,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:
     if (optlen < sizeof(int)) {
-      err = EINVAL;
+      err = LWIP_EINVAL;
       break;
     }
 
@@ -2112,7 +2112,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
-      err = ENOPROTOOPT;
+      err = LWIP_ENOPROTOOPT;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_UDP && LWIP_UDPLITE */
@@ -2120,7 +2120,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n",
                 s, level, optname));
-    err = ENOPROTOOPT;
+    err = LWIP_ENOPROTOOPT;
   }  /* switch (level) */
 
 
@@ -2274,7 +2274,7 @@ lwip_setsockopt_internal(void *arg)
           data->err = igmp_leavegroup(&if_addr, &multi_addr);
         }
         if(data->err != ERR_OK) {
-          data->err = EADDRNOTAVAIL;
+          data->err = LWIP_EADDRNOTAVAIL;
         }
       }
       break;
@@ -2386,7 +2386,7 @@ lwip_ioctl(int s, long cmd, void *argp)
   switch (cmd) {
   case FIONREAD:
     if (!argp) {
-      sock_set_errno(sock, EINVAL);
+      sock_set_errno(sock, LWIP_EINVAL);
       return -1;
     }
 
@@ -2424,7 +2424,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, UNIMPL: 0x%lx, %p)\n", s, cmd, argp));
-    sock_set_errno(sock, ENOSYS); /* not yet implemented */
+    sock_set_errno(sock, LWIP_ENOSYS); /* not yet implemented */
     return -1;
   } /* switch (cmd) */
 }
@@ -2470,7 +2470,7 @@ get_event_by_fd(int fd)
   fd -= NUM_SOCKETS;
   if ((fd < 0) || (fd >= NUM_EVENTS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_event_by_fd(%d): invalid\n", fd));
-    set_errno(EBADF);
+    set_errno(LWIP_EBADF);
     return NULL;
   }
 
@@ -2478,7 +2478,7 @@ get_event_by_fd(int fd)
 
   if (!handle->event) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_event_by_fd(%d): not active\n", fd));
-    set_errno(EBADF);
+    set_errno(LWIP_EBADF);
     return NULL;
   }
 
@@ -2520,7 +2520,7 @@ int mico_delete_event_fd(int fd)
   
   if ((fd < 0) || (fd >= NUM_EVENTS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_event_by_fd(%d): invalid\n", fd));
-    set_errno(EBADF);
+    set_errno(LWIP_EBADF);
     return -1;
   }
 

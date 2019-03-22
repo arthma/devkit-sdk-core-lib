@@ -175,21 +175,21 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
 
   if (result == NULL) {
     /* not all arguments given */
-    *h_errnop = EINVAL;
+    *h_errnop = LWIP_EINVAL;
     return -1;
   }
   /* first thing to do: set *result to nothing */
   *result = NULL;
   if ((name == NULL) || (ret == NULL) || (buf == 0)) {
     /* not all arguments given */
-    *h_errnop = EINVAL;
+    *h_errnop = LWIP_EINVAL;
     return -1;
   }
 
   namelen = strlen(name);
   if (buflen < (sizeof(struct gethostbyname_r_helper) + namelen + 1 + (MEM_ALIGNMENT - 1))) {
     /* buf can't hold the data needed + a copy of name */
-    *h_errnop = ERANGE;
+    *h_errnop = LWIP_ERANGE;
     return -1;
   }
 
@@ -200,7 +200,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   err = netconn_gethostbyname(name, &(h->addr));
   if (err != ERR_OK) {
     LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
-    *h_errnop = ENSRNOTFOUND;
+    *h_errnop = LWIP_ENSRNOTFOUND;
     return -1;
   }
 
