@@ -1,0 +1,6 @@
+[submodule "azure-iot-sdk-c"]
+	path = azure-iot-sdk-c
+	url = https://github.com/VSChina/devkit-azure-iot-sdk-c
+[submodule "mbed-os"]
+	path = mbed-os
+	url = https://github.com/VSChina/mbed-os
