@@ -5,6 +5,34 @@ This repository contains the following for MXChip IoT DevKit:
 
 ## Compile
 
+1. Install [mbed CLI](https://os.mbed.com/docs/v5.10/tutorials/quick-start-offline.html) if you didn't have it on your machine.
+
+   *The mbed CLI requires Python 2.7, please make sure you have installed the right version*
+
+2. Clone the code:
+
+   ```
+   git clone https://github.com/VSChina/devkit-sdk-core-lib --recursive
+   cd ./devkit-sdk-core-lib
+   ```
+
+3. Compile:
+
+   ```
+   mbed compile --library --profile ./tools/profiles/library.json
+   ```
+
+4. After compile the code and generate the **libdevkit-sdk-core-lib.a**, can invoke the clean.cmd to clean up the output folder:
+
+   ```
+   cd ./BUILD
+   ../tools/clean.cmd
+   ```
+
+   After run the clean.cmd under the **BUILD** folder, all files under the **BUILD/libraries/devkit-sdk-core-lib/AZ3166/GCC_ARM** can be used for generating the Arduino package.
+
+
+
 ## Contribution
 
 There are a couple of ways you can contribute to this repo:
