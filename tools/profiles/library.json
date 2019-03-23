@@ -5,7 +5,7 @@
                    "-fmessage-length=0", "-fno-exceptions", "-fno-builtin",
                    "-ffunction-sections", "-fdata-sections", "-funsigned-char",
                    "-MMD", "-fno-delete-null-pointer-checks",
-                   "-fomit-frame-pointer", "-O2", "-g3", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16"],
+                   "-fomit-frame-pointer", "-Os", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16"],
         "asm": ["-x", "assembler-with-cpp"],
         "c": ["-std=gnu99"],
         "cxx": ["-std=gnu++11", "-fno-rtti", "-Wvla"],
